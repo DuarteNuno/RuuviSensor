@@ -42,7 +42,6 @@ while(True):
     avg_p=0
         
     now = dt.datetime.now()
-    date = now.strftime("%Y-%m-%d %H:%M:%S")
 
     if len(array)==0: 
         print("unable to connect")
@@ -51,20 +50,22 @@ while(True):
     for i in array:
         print('OK')
 
-        json_data={
-                "measurement": "Data",
-                "fields":
-                {   
-                    #create new filed relative time
-                    "Mac_Address": i[0],
-                    "Temperature": i[1]["temperature"],
-                    "Humidity": i[1]["humidity"],
-                    "Air_Pressure": i[1]["pressure"],
-                    "Battery": i[1]["battery"],
-                    "Movement_Counter": i[1]["movement_counter"]
-                }
-        }
-
+        json_data=[
+                {
+                    "measurement": "Data",
+                    "fields":
+                    {   
+                        #create new filed relative time
+                        "Date": int (round(now.timestamp()*1000)),
+                        "Mac_Address": i[0],
+                        "Temperature": i[1]["temperature"],
+                        "Humidity": i[1]["humidity"],
+                        "Air_Pressure": i[1]["pressure"],
+                        "Battery": i[1]["battery"],
+                        "Movement_Counter": i[1]["movement_counter"]
+                    }
+            }
+        ]
 
         avg_t += i[1]["temperature"]
         avg_h += i[1]["humidity"]
@@ -72,20 +73,6 @@ while(True):
 
         client.write_points(json_data)
 
-
-
-    json_average=[
-        {
-            "measurement": "Average",
-            "fields":
-            {
-                "Average_Temperature": avg_t/len(array),
-                "Average_Humidity": avg_h/len(array),
-                "Average_Air_Pressure": avg_p/len(array),
-            }
-        }
-    ]
-    client.write_points(json_average)
 
     deviation_t = 0
     deviation_h = 0
@@ -97,19 +84,19 @@ while(True):
         deviation_p += math.pow(i[1]["pressure"]    - (avg_p/len(array)),2)
         
 
-    json_error=[
+    json_deviation=[
         {
-            "measurement": "Error",
+            "measurement": "Deviation",
             "fields":
             {
-                "Error_Temperature":math.sqrt(deviation_t/(len(array)-1))/math.sqrt(len(array)),
-                "Error_Humidity":   math.sqrt(deviation_h/(len(array)-1))/math.sqrt(len(array)),
-                "Error_Pressure":   math.sqrt(deviation_p/(len(array)-1))/math.sqrt(len(array)),
+                "Deviation_Temperature":math.sqrt(deviation_t/(len(array)-1)),
+                "Deviation_Humidity":   math.sqrt(deviation_h/(len(array)-1)),
+                "Deviation_Pressure":   math.sqrt(deviation_p/(len(array)-1)),
             }
         }
     ]
 
-    client.write_points(json_error)
+    client.write_points(json_deviation)
 
     print("SAVED")
 
