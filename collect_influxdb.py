@@ -55,8 +55,6 @@ while(True):
                     "measurement": "Data",
                     "fields":
                     {   
-                        #create new filed relative time
-                        "Date": int (round(now.timestamp()*1000)),
                         "Mac_Address": i[0],
                         "Temperature": i[1]["temperature"],
                         "Humidity": i[1]["humidity"],
