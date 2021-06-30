@@ -5,14 +5,18 @@ from config import *
 from ruuvitag_sensor.ruuvi import RuuviTagSensor
 from influxdb import InfluxDBClient
 
-#start influxdb
+"""
+start influxdb
+"""
 def config_influxdb():
     client=InfluxDBClient (host=HOST,port=PORT)
     client.switch_database(DB)
     
     return client
 
-#check if file is part of array
+"""
+check if file is part of array
+"""
 def contains(file,array):
     if array==[]:
         return False
@@ -23,7 +27,9 @@ def contains(file,array):
     
     return False
 
-#get Data from ruuvi and store in influxdb
+"""
+get Data from ruuvi and save in influxdb
+"""
 def collect_influxdb(client = InfluxDBClient() ):
     os.environ['RUUVI_BLE_ADAPTER'] = "Bleson"
 
