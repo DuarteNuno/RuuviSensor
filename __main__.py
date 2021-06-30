@@ -4,7 +4,6 @@ import math
 from config import *
 from ruuvitag_sensor.ruuvi import RuuviTagSensor
 from influxdb import InfluxDBClient
-import datetime as dt
 
 #start influxdb
 def config_influxdb():
@@ -28,68 +27,67 @@ def contains(file,array):
 def collect_influxdb(client = InfluxDBClient() ):
     os.environ['RUUVI_BLE_ADAPTER'] = "Bleson"
 
-    array=[]
+    #array of sensors
+    sensors=[]
 
     for new_data in RuuviTagSensor._get_ruuvitag_datas([],10):
-        if not contains(new_data,array):
-            array.append(new_data)        
+        if not contains(new_data,sensors):
+            sensors.append(new_data)        
 
     #number of ruuvi read
-    print(len(array))
+    print(len(sensors))
 
     avg_t=0
     avg_h=0
     avg_p=0
         
-    now = dt.datetime.now()
-
-    if len(array)==0: 
+    if len(sensors)==0: 
         print("unable to connect")
 
-    for i in array:
+    for tag in sensors:
         json_data=[
                 {
                     "measurement": "Data",
                     "fields":
                     {   
-                        "Mac_Address": i[0],
-                        "Temperature": i[1]["temperature"],
-                        "Humidity": i[1]["humidity"],
-                        "Air_Pressure": i[1]["pressure"],
-                        "Battery": i[1]["battery"],
-                        "Movement_Counter": i[1]["movement_counter"]
+                        "Mac_Address": tag[0],
+                        "Temperature": tag[1]["temperature"],
+                        "Humidity": tag[1]["humidity"],
+                        "Air_Pressure": tag[1]["pressure"],
+                        "Battery": tag[1]["battery"],
+                        "Movement_Counter": tag[1]["movement_counter"]
                     }
             }
         ]
 
-        avg_t += i[1]["temperature"]
-        avg_h += i[1]["humidity"]
-        avg_p += i[1]["pressure"]
+        avg_t += tag[1]["temperature"]
+        avg_h += tag[1]["humidity"]
+        avg_p += tag[1]["pressure"]
 
         client.write_points(json_data)
         
-    avg_t = avg_t/len(array)
-    avg_h = avg_h/len(array)
-    avg_p = avg_p/len(array)
+    avg_t = avg_t/len(sensors)
+    avg_h = avg_h/len(sensors)
+    avg_p = avg_p/len(sensors)
 
 
     deviation_t = 0
     deviation_h = 0
     deviation_p = 0
 
-    for i in array:
-        deviation_t += math.pow(i[1]["temperature"] - avg_t,2)
-        deviation_h += math.pow(i[1]["humidity"]    - avg_h,2)
-        deviation_p += math.pow(i[1]["pressure"]    - avg_p,2)
+    for tag in sensors:
+        deviation_t += math.pow(tag[1]["temperature"] - avg_t,2)
+        deviation_h += math.pow(tag[1]["humidity"]    - avg_h,2)
+        deviation_p += math.pow(tag[1]["pressure"]    - avg_p,2)
         
     json_deviation=[
         {
             "measurement": "Deviation",
             "fields":
             {
-                "Deviation_Temperature":math.sqrt(deviation_t/(len(array)-1)),
-                "Deviation_Humidity":   math.sqrt(deviation_h/(len(array)-1)),
-                "Deviation_Pressure":   math.sqrt(deviation_p/(len(array)-1)),
+                "Deviation_Temperature":math.sqrt(deviation_t/(len(sensors)-1)),
+                "Deviation_Humidity":   math.sqrt(deviation_h/(len(sensors)-1)),
+                "Deviation_Pressure":   math.sqrt(deviation_p/(len(sensors)-1)),
             }
         }
     ]
@@ -105,5 +103,4 @@ if __name__ == '__main__' :
     client = config_influxdb()
     while(True):
         collect_influxdb(client)
-
-#sudo service grafana-server restart
+        
